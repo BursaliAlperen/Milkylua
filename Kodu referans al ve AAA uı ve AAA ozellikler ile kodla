@@ -51,6 +51,11 @@ local BLOOD     = Color3.fromRGB(139, 0, 0)
 
 local AURA_TEXTURE = "rbxassetid://140516321078827"
 
+-- Brand signature baked into the UI/cutscenes (repo brand).
+local BRAND_NAME     = "Milkylua"
+local BRAND_TAGLINE  = "AAA TYBW Delta+"
+local BRAND_STAMP    = BRAND_NAME .. "  •  " .. BRAND_TAGLINE
+
 -- Sesler (gerçek ID'lerle değiştirin veya çalışmayanları kaldırın)
 local SOUNDS = {
     Kyoka     = "rbxassetid://156156156",
@@ -305,6 +310,21 @@ local function cinematicCaption(titleText, subText, duration)
     subLbl.TextXAlignment = Enum.TextXAlignment.Left
     subLbl.Parent         = sweep
 
+    local brandLbl = Instance.new("TextLabel")
+    brandLbl.BackgroundTransparency = 0.18
+    brandLbl.BackgroundColor3 = Color3.fromRGB(18, 8, 38)
+    brandLbl.BorderSizePixel = 0
+    brandLbl.AnchorPoint = Vector2.new(1, 0)
+    brandLbl.Position = UDim2.new(1, -22, 0, 14)
+    brandLbl.Size = UDim2.fromOffset(190, 24)
+    brandLbl.Font = Enum.Font.GothamBlack
+    brandLbl.Text = BRAND_STAMP
+    brandLbl.TextColor3 = GOLD
+    brandLbl.TextScaled = true
+    brandLbl.TextTransparency = 0.03
+    brandLbl.Parent = sweep
+    Instance.new("UICorner", brandLbl).CornerRadius = UDim.new(1, 0)
+
     tween(sweep, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out,
         {Position = UDim2.new(0.04, 0, 0.78, 0), Size = UDim2.new(0.92, 0, 0, 115)})
 
@@ -312,6 +332,7 @@ local function cinematicCaption(titleText, subText, duration)
         tween(sweep,    0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.In, {Position = UDim2.new(1.18, 0, 0.78, 0), BackgroundTransparency = 1})
         tween(titleLbl, 0.18, Enum.EasingStyle.Sine,  Enum.EasingDirection.In, {TextTransparency = 1})
         tween(subLbl,   0.18, Enum.EasingStyle.Sine,  Enum.EasingDirection.In, {TextTransparency = 1})
+        tween(brandLbl, 0.18, Enum.EasingStyle.Sine,  Enum.EasingDirection.In, {TextTransparency = 1, BackgroundTransparency = 1})
         Debris:AddItem(gui, 0.4)
     end)
 end
@@ -422,6 +443,17 @@ local function mangaBubble(text, duration, position)
     textLbl.Size = UDim2.new(1, -20, 1, -20)
     textLbl.Position = UDim2.fromOffset(10, 10)
     textLbl.Parent = bubble
+
+    local sig = Instance.new("TextLabel")
+    sig.BackgroundTransparency = 1
+    sig.Font = Enum.Font.GothamBlack
+    sig.Text = BRAND_NAME
+    sig.TextColor3 = Color3.fromRGB(70, 30, 120)
+    sig.TextScaled = true
+    sig.TextXAlignment = Enum.TextXAlignment.Right
+    sig.Size = UDim2.new(1, -18, 0, 18)
+    sig.Position = UDim2.new(0, 8, 1, -24)
+    sig.Parent = bubble
 
     bubble.BackgroundTransparency = 0.1
     tween(bubble, 0.2, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out, {BackgroundTransparency = 0})
@@ -603,38 +635,78 @@ local function flingTarget(targetHumanoid, flingPower, flingDirection)
     local targetRoot = targetHumanoid.Parent:FindFirstChild("HumanoidRootPart")
     if not targetRoot then return end
 
-    -- Ana fling (BodyVelocity)
+    local dir = flingDirection or (targetRoot.Position - root.Position)
+    if dir.Magnitude < 0.05 then
+        dir = root.CFrame.LookVector + Vector3.new(0, 0.85, 0)
+    end
+    dir = dir.Unit
+    local power = flingPower or 320
+
+    -- Instant replicated impulse attempt + legacy movers for Delta/executor compatibility.
+    pcall(function()
+        targetRoot.AssemblyLinearVelocity = dir * power + Vector3.new(0, power * 0.32, 0)
+        targetRoot.AssemblyAngularVelocity = Vector3.new(
+            rng:NextNumber(-95, 95), rng:NextNumber(-130, 130), rng:NextNumber(-95, 95)
+        )
+    end)
+
+    local att = Instance.new("Attachment")
+    att.Name = "Milkylua_FlingAnchor"
+    att.Parent = targetRoot
+
+    local lv = Instance.new("LinearVelocity")
+    lv.Name = "Milkylua_LinearFling"
+    lv.Attachment0 = att
+    lv.MaxForce = math.huge
+    lv.VectorVelocity = dir * power + Vector3.new(0, power * 0.25, 0)
+    lv.Parent = targetRoot
+    Debris:AddItem(lv, 0.32)
+    Debris:AddItem(att, 0.36)
+
     local bv = Instance.new("BodyVelocity")
     bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-    bv.Velocity = flingDirection.Unit * flingPower
+    bv.P = 25000
+    bv.Velocity = dir * power + Vector3.new(0, power * 0.22, 0)
     bv.Parent   = targetRoot
-    Debris:AddItem(bv, 0.2)
+    Debris:AddItem(bv, 0.34)
 
-    -- Fırlatma dönüşü
     local bav = Instance.new("BodyAngularVelocity")
     bav.MaxTorque      = Vector3.new(math.huge, math.huge, math.huge)
-    bav.AngularVelocity= Vector3.new(rng:NextNumber(-150, 150), rng:NextNumber(-150, 150), rng:NextNumber(-150, 150))
+    bav.P              = 18000
+    bav.AngularVelocity= Vector3.new(rng:NextNumber(-190, 190), rng:NextNumber(-240, 240), rng:NextNumber(-190, 190))
     bav.Parent         = targetRoot
-    Debris:AddItem(bav, 0.2)
+    Debris:AddItem(bav, 0.34)
 
-    -- Kısa süreli sersemletme (stun)
     local human = targetHumanoid
     local oldWalk = human.WalkSpeed
+    local oldJump = human.JumpPower
     human.WalkSpeed = 0
-    task.delay(0.25, function()
+    human.JumpPower = 0
+    human.PlatformStand = true
+    task.delay(0.42, function()
         if human and human.Parent then
             human.WalkSpeed = oldWalk
+            human.JumpPower = oldJump
+            human.PlatformStand = false
         end
     end)
 
-    cameraPulse(0.9, 0.3)
-    applyPostProcessing(2.2, 0, 0.25, 0.45)
-    playSound(SOUNDS.Impact, 2.0, 1.1)
+    cameraPulse(1.05, 0.36)
+    applyPostProcessing(2.5, 0, 0.15, 0.5)
+    playSound(SOUNDS.Impact, 2.2, 1.1)
 
     local iPos = targetRoot.Position
-    orb(iPos, 4.5, RED_HIT, 0.35)
-    ring(CF(iPos), 7.0, RED_HIT, 0.45, 0.25)
-    burstRays(iPos, RED_HIT, 10, 10, 0.4)
+    orb(iPos, 5.2, RED_HIT, 0.38)
+    ring(CF(iPos), 8.0, RED_HIT, 0.48, 0.28)
+    burstRays(iPos, RED_HIT, 14, 13, 0.46)
+    lightningChain(root.Position + Vector3.new(0, 2.2, 0), iPos, CRIMSON, 10, 0.28)
+    task.delay(0.12, function()
+        if targetRoot and targetRoot.Parent then
+            local p = targetRoot.Position
+            orb(p, 3.2, CRIMSON, 0.28)
+            ring(CF(p), 5.6, CRIMSON, 0.32, 0.16)
+        end
+    end)
 end
 
 -- Işınlama (spawn veya rastgele nokta)
@@ -1400,6 +1472,38 @@ local function useHado90()
     innerLight.Color = BLACKHOLE
     innerLight.Brightness = 0
     innerLight.Range = 20
+
+    local cubeFaces = {
+        {Vector3.new(28, 0.22, 28), CF(centerPos + Vector3.new(0, 14, 0)), 0.72},
+        {Vector3.new(28, 0.22, 28), CF(centerPos - Vector3.new(0, 14, 0)), 0.72},
+        {Vector3.new(28, 28, 0.22), CF(centerPos + Vector3.new(0, 0, 14)), 0.66},
+        {Vector3.new(28, 28, 0.22), CF(centerPos - Vector3.new(0, 0, 14)), 0.66},
+        {Vector3.new(0.22, 28, 28), CF(centerPos + Vector3.new(14, 0, 0)), 0.66},
+        {Vector3.new(0.22, 28, 28), CF(centerPos - Vector3.new(14, 0, 0)), 0.66},
+    }
+    for _, face in ipairs(cubeFaces) do
+        local panel = makePart("MilkyluaCoffinFace", face[1], face[2], DARK, Enum.Material.Neon, 1)
+        tween(panel, 0.34, Enum.EasingStyle.Quint, Enum.EasingDirection.Out, {Transparency = face[3]})
+        task.delay(1.08, function()
+            tween(panel, 0.48, Enum.EasingStyle.Quint, Enum.EasingDirection.In, {Transparency = 1})
+        end)
+        Debris:AddItem(panel, 1.72)
+    end
+
+    local edgeOffsets = {
+        Vector3.new(14,14,14), Vector3.new(-14,14,14), Vector3.new(14,-14,14), Vector3.new(-14,-14,14),
+        Vector3.new(14,14,-14), Vector3.new(-14,14,-14), Vector3.new(14,-14,-14), Vector3.new(-14,-14,-14),
+    }
+    for _, off in ipairs(edgeOffsets) do
+        beamVFX(centerPos + Vector3.new(off.X, -14, off.Z), centerPos + Vector3.new(off.X, 14, off.Z), CRIMSON, 0.35, 1.25)
+    end
+    mangaBubble("Kurohitsugi.", 1.45, UDim2.fromScale(0.78, 0.34))
+    task.spawn(function()
+        for i = 1, 10 do
+            task.wait(0.06)
+            ring(CF(centerPos) * ANGLES(RAD(90), RAD(i * 18), 0), 11 + i * 1.2, (i % 2 == 0) and CRIMSON or DARK, 1.05, 0.18)
+        end
+    end)
     
     -- Kırmızı şimşekler küpün etrafında
     task.spawn(function()
@@ -1462,17 +1566,31 @@ local function useByakurai()
     task.delay(0.05, function() beamVFX(startPos, endPos, WHITE, 0.35, 0.35) end)
     lightningChain(startPos, endPos, LIGHTNING, 16, 0.25)
 
-    orb(endPos, 3.5, LIGHTNING, 0.7)
-    ring(CF(endPos), 5, LIGHTNING, 0.55, 0.14)
+    for i = 1, 8 do
+        local t = i / 8
+        local p = startPos:Lerp(endPos, t)
+        task.delay(i * 0.025, function()
+            ring(CF(p) * ANGLES(RAD(90), 0, 0), 1.7 + i * 0.18, (i % 2 == 0) and WHITE or LIGHTNING, 0.34, 0.08)
+        end)
+    end
+    for i = 1, 4 do
+        local side = root.CFrame.RightVector * rng:NextNumber(-2.5, 2.5) + Vector3.new(0, rng:NextNumber(-1.1, 1.1), 0)
+        lightningChain(startPos + side, endPos - side, (i % 2 == 0) and WHITE or LIGHTNING, 14, 0.22)
+    end
 
-    local enemy = getNearestEnemy(70)
-    if enemy then
-        local hr = enemy.Parent:FindFirstChild("HumanoidRootPart")
-        if hr then
-            local toEnemy = (hr.Position - startPos).Unit
-            local dot = toEnemy:Dot(lookDir)
-            if dot > 0.65 then
-                flingTarget(enemy, 350, lookDir + Vector3.new(0, 0.4, 0))
+    orb(endPos, 4.6, LIGHTNING, 0.72)
+    ring(CF(endPos), 6.5, LIGHTNING, 0.58, 0.16)
+    mangaBubble("Hadō #4: Byakurai!", 1.15, UDim2.fromScale(0.74, 0.58))
+
+    local beamLength = (endPos - startPos).Magnitude
+    for _, enemy in ipairs(getAllEnemiesInRange(root.Position, 95)) do
+        local rel = enemy.root.Position - startPos
+        local along = rel:Dot(lookDir)
+        if along > 0 and along < beamLength then
+            local closest = startPos + lookDir * along
+            if (enemy.root.Position - closest).Magnitude <= 9 then
+                flingTarget(enemy.hum, 380, lookDir + Vector3.new(0, 0.48, 0))
+                orb(enemy.root.Position, 3.0, LIGHTNING, 0.32)
             end
         end
     end
@@ -1569,6 +1687,80 @@ local function useAura()
     orbitalRings(root, ACCENT, 5, 6.5)
     cinematicCaption("Reiatsu Aura", "Overwhelming Pressure", 2.8)
     notify("Aura", "Reiatsu Aura active!", 3)
+end
+
+-- ============================================================
+-- BRAND WATERMARK
+-- ============================================================
+local brandGui
+local brandConn
+local function createBrandWatermark()
+    if brandConn then brandConn:Disconnect(); brandConn = nil end
+    if brandGui then brandGui:Destroy() end
+
+    local gui = Instance.new("ScreenGui")
+    gui.Name = "Milkylua_Brand"
+    gui.IgnoreGuiInset = true
+    gui.ResetOnSpawn = false
+    gui.DisplayOrder = 25
+    gui.Parent = playerGui
+    brandGui = gui
+
+    local badge = Instance.new("Frame")
+    badge.AnchorPoint = Vector2.new(1, 0)
+    badge.Position = UDim2.new(1, -16, 0, 14)
+    badge.Size = UDim2.fromOffset(255, 46)
+    badge.BackgroundColor3 = Color3.fromRGB(10, 4, 24)
+    badge.BackgroundTransparency = 0.16
+    badge.BorderSizePixel = 0
+    badge.Parent = gui
+    Instance.new("UICorner", badge).CornerRadius = UDim.new(0, 14)
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = ACCENT
+    stroke.Thickness = 1.8
+    stroke.Transparency = 0.22
+    stroke.Parent = badge
+
+    local title = Instance.new("TextLabel")
+    title.BackgroundTransparency = 1
+    title.Font = Enum.Font.GothamBlack
+    title.Text = BRAND_NAME
+    title.TextColor3 = WHITE
+    title.TextScaled = true
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Position = UDim2.fromOffset(14, 5)
+    title.Size = UDim2.new(1, -28, 0, 22)
+    title.Parent = badge
+
+    local subtitle = Instance.new("TextLabel")
+    subtitle.BackgroundTransparency = 1
+    subtitle.Font = Enum.Font.GothamSemibold
+    subtitle.Text = BRAND_TAGLINE .. "  •  Aizen FE"
+    subtitle.TextColor3 = GOLD
+    subtitle.TextScaled = true
+    subtitle.TextXAlignment = Enum.TextXAlignment.Left
+    subtitle.Position = UDim2.fromOffset(14, 26)
+    subtitle.Size = UDim2.new(1, -28, 0, 16)
+    subtitle.Parent = badge
+
+    local shine = Instance.new("Frame")
+    shine.BackgroundColor3 = Color3.new(1, 1, 1)
+    shine.BackgroundTransparency = 0.88
+    shine.BorderSizePixel = 0
+    shine.Size = UDim2.new(1, 0, 0.42, 0)
+    shine.Parent = badge
+    Instance.new("UICorner", shine).CornerRadius = UDim.new(0, 14)
+
+    brandConn = RunService.Heartbeat:Connect(function()
+        if not badge.Parent then
+            if brandConn then brandConn:Disconnect(); brandConn = nil end
+            return
+        end
+        local pulse = 0.5 + math.sin(os.clock() * 2.4) * 0.5
+        stroke.Transparency = 0.18 + pulse * 0.28
+        stroke.Color = isBankaiActive and ORANGE or ACCENT
+    end)
 end
 
 -- ============================================================
@@ -1885,7 +2077,7 @@ local function createIntroGui(onComplete)
     titleLbl.Font = Enum.Font.GothamBlack
     titleLbl.Position = UDim2.fromOffset(28,26)
     titleLbl.Size = UDim2.new(1,-56,0,46)
-    titleLbl.Text = "Aizen FE  |  TYBW Delta+"
+    titleLbl.Text = BRAND_NAME .. "  |  Aizen FE  |  TYBW Delta+"
     titleLbl.TextColor3 = WHITE; titleLbl.TextScaled = true
     titleLbl.TextXAlignment = Enum.TextXAlignment.Left
     titleLbl.Parent = card
@@ -1895,7 +2087,7 @@ local function createIntroGui(onComplete)
     subLbl.Font = Enum.Font.GothamSemibold
     subLbl.Position = UDim2.fromOffset(30,82)
     subLbl.Size = UDim2.new(1,-60,0,34)
-    subLbl.Text = "System starting..."
+    subLbl.Text = BRAND_TAGLINE .. " system starting..."
     subLbl.TextColor3 = GOLD; subLbl.TextScaled = true
     subLbl.TextXAlignment = Enum.TextXAlignment.Left
     subLbl.Parent = card
@@ -1916,6 +2108,7 @@ local function createIntroGui(onComplete)
     local infoTexts = {
         "✦ Left panel: 7 Tools (Reiatsu, Kyoka, Flash, Hado 90, Byakurai, Cero, Aura)",
         "✦ Right panel: Z = Shikai  |  B = Bankai",
+        "✦ " .. BRAND_NAME .. " signature UI, captions, watermark, and cutscene tags",
         "✦ Chat messages auto-send  •  Fling system active  •  AAA VFX",
         "✦ Kurohitsugi: Giant Black Coffin + Teleport to Spawn",
     }
@@ -2005,6 +2198,7 @@ local function startKit()
     deathReset()
 
     createToolGui()
+    createBrandWatermark()
     createMobileButtons(activateShikai, activateBankai)
 
     player.CharacterAdded:Connect(function(newChar)
@@ -2018,12 +2212,13 @@ local function startKit()
         installProceduralAnimationEngine()
         deathReset()
         createToolGui()
+        createBrandWatermark()
         createMobileButtons(activateShikai, activateBankai)
     end)
 
     createIntroGui(function()
         task.delay(0.35, function()
-            cinematicCaption("AIZEN FE", "TYBW Delta+ System Active", 3.2)
+            cinematicCaption(BRAND_NAME .. " AIZEN FE", "TYBW Delta+ System Active", 3.2)
             task.delay(0.2, function()
                 notify("Aizen FE", "TYBW Delta+ Loaded! Left=Tools, Right=Shikai/Bankai", 6)
             end)
