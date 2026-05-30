@@ -10,6 +10,8 @@ Milkylua is a Roblox/Luau Aizen FE TYBW Delta+ script focused on cinematic AAA-s
 - **Kurohitsugi cutscene pass** with giant coffin cube panels, crimson edge beams, manga bubble callout, rings, lightning, target fling, and spawn teleport sequence.
 - **Byakurai VFX pass** with layered beams, spiral rings, side lightning, manga callout, and multi-target beam-line hit detection.
 - **Aizen-style no-sword animation/VFX kit** with shikai, bankai, aura, flash step, reiatsu burst, Cero, and mobile buttons.
+- **FE-safe synchronized cutscene layer** for shared captions, bars, flash, post-processing, particles, rings, and beams.
+- **Runtime fix**: the original Turkish instruction header is now commented out so it cannot execute as Lua line 1.
 
 ## Main Script
 
