@@ -4,7 +4,8 @@ Milkylua is a Roblox/Luau Aizen FE TYBW Delta+ script focused on cinematic AAA-s
 
 ## Highlights
 
-- **Milkylua branding** across the loader, watermark, manga bubbles, and cinematic captions.
+- **Milkylua branding** across the loader, watermark, manga bubbles, cinematic captions, and `by Milkylua` byline.
+- **Discord copy CTA** in the top-right UI for “More anime & updates” with a click-to-copy button.
 - **Upgraded fling system** using immediate velocity, `LinearVelocity`, legacy `BodyVelocity`, angular spin, stun timing, and red impact VFX.
 - **Kurohitsugi cutscene pass** with giant coffin cube panels, crimson edge beams, manga bubble callout, rings, lightning, target fling, and spawn teleport sequence.
 - **Byakurai VFX pass** with layered beams, spiral rings, side lightning, manga callout, and multi-target beam-line hit detection.

@@ -53,8 +53,10 @@ local AURA_TEXTURE = "rbxassetid://140516321078827"
 
 -- Brand signature baked into the UI/cutscenes (repo brand).
 local BRAND_NAME     = "Milkylua"
+local BRAND_BYLINE   = "by Milkylua"
 local BRAND_TAGLINE  = "AAA TYBW Delta+"
-local BRAND_STAMP    = BRAND_NAME .. "  •  " .. BRAND_TAGLINE
+local BRAND_STAMP    = BRAND_BYLINE .. "  •  " .. BRAND_TAGLINE
+local DISCORD_INVITE = "https://discord.gg/milkylua" -- Replace with your official invite if needed.
 
 -- Sesler (gerçek ID'lerle değiştirin veya çalışmayanları kaldırın)
 local SOUNDS = {
@@ -122,6 +124,26 @@ local function notify(title, text, duration)
             })
         end)
     end)
+end
+
+local function copyDiscordInvite()
+    local copied = false
+    pcall(function()
+        if typeof(setclipboard) == "function" then
+            setclipboard(DISCORD_INVITE)
+            copied = true
+        elseif typeof(toclipboard) == "function" then
+            toclipboard(DISCORD_INVITE)
+            copied = true
+        end
+    end)
+
+    if copied then
+        notify(BRAND_NAME, "Discord invite copied!", 3)
+    else
+        notify(BRAND_NAME, "Copy unavailable here: " .. DISCORD_INVITE, 5)
+    end
+    return copied
 end
 
 local function makePart(name, size, cf, color, material, transparency)
@@ -1690,7 +1712,7 @@ local function useAura()
 end
 
 -- ============================================================
--- BRAND WATERMARK
+-- BRAND WATERMARK + DISCORD COPY CTA
 -- ============================================================
 local brandGui
 local brandConn
@@ -1706,21 +1728,41 @@ local function createBrandWatermark()
     gui.Parent = playerGui
     brandGui = gui
 
-    local badge = Instance.new("Frame")
-    badge.AnchorPoint = Vector2.new(1, 0)
-    badge.Position = UDim2.new(1, -16, 0, 14)
-    badge.Size = UDim2.fromOffset(255, 46)
-    badge.BackgroundColor3 = Color3.fromRGB(10, 4, 24)
-    badge.BackgroundTransparency = 0.16
-    badge.BorderSizePixel = 0
-    badge.Parent = gui
-    Instance.new("UICorner", badge).CornerRadius = UDim.new(0, 14)
+    local panel = Instance.new("Frame")
+    panel.Name = "BrandPanel"
+    panel.AnchorPoint = Vector2.new(1, 0)
+    panel.Position = UDim2.new(1, -14, 0, 12)
+    panel.Size = UDim2.fromOffset(318, 112)
+    panel.BackgroundColor3 = Color3.fromRGB(8, 3, 22)
+    panel.BackgroundTransparency = 0.08
+    panel.BorderSizePixel = 0
+    panel.Parent = gui
+    Instance.new("UICorner", panel).CornerRadius = UDim.new(0, 18)
+
+    local panelGradient = Instance.new("UIGradient")
+    panelGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(34, 12, 80)),
+        ColorSequenceKeypoint.new(0.48, Color3.fromRGB(9, 4, 24)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(58, 16, 8)),
+    })
+    panelGradient.Rotation = 24
+    panelGradient.Parent = panel
 
     local stroke = Instance.new("UIStroke")
     stroke.Color = ACCENT
-    stroke.Thickness = 1.8
-    stroke.Transparency = 0.22
-    stroke.Parent = badge
+    stroke.Thickness = 2
+    stroke.Transparency = 0.16
+    stroke.Parent = panel
+
+    local glow = Instance.new("Frame")
+    glow.Name = "TopGlow"
+    glow.BackgroundColor3 = ACCENT
+    glow.BackgroundTransparency = 0.25
+    glow.BorderSizePixel = 0
+    glow.Position = UDim2.fromOffset(14, 8)
+    glow.Size = UDim2.new(1, -28, 0, 2)
+    glow.Parent = panel
+    Instance.new("UICorner", glow).CornerRadius = UDim.new(1, 0)
 
     local title = Instance.new("TextLabel")
     title.BackgroundTransparency = 1
@@ -1729,37 +1771,110 @@ local function createBrandWatermark()
     title.TextColor3 = WHITE
     title.TextScaled = true
     title.TextXAlignment = Enum.TextXAlignment.Left
-    title.Position = UDim2.fromOffset(14, 5)
-    title.Size = UDim2.new(1, -28, 0, 22)
-    title.Parent = badge
+    title.Position = UDim2.fromOffset(18, 15)
+    title.Size = UDim2.new(1, -36, 0, 28)
+    title.Parent = panel
 
-    local subtitle = Instance.new("TextLabel")
-    subtitle.BackgroundTransparency = 1
-    subtitle.Font = Enum.Font.GothamSemibold
-    subtitle.Text = BRAND_TAGLINE .. "  •  Aizen FE"
-    subtitle.TextColor3 = GOLD
-    subtitle.TextScaled = true
-    subtitle.TextXAlignment = Enum.TextXAlignment.Left
-    subtitle.Position = UDim2.fromOffset(14, 26)
-    subtitle.Size = UDim2.new(1, -28, 0, 16)
-    subtitle.Parent = badge
+    local byline = Instance.new("TextLabel")
+    byline.BackgroundTransparency = 1
+    byline.Font = Enum.Font.GothamBold
+    byline.Text = BRAND_BYLINE .. "  •  Aizen FE"
+    byline.TextColor3 = GOLD
+    byline.TextScaled = true
+    byline.TextXAlignment = Enum.TextXAlignment.Left
+    byline.Position = UDim2.fromOffset(20, 43)
+    byline.Size = UDim2.new(1, -40, 0, 18)
+    byline.Parent = panel
 
-    local shine = Instance.new("Frame")
-    shine.BackgroundColor3 = Color3.new(1, 1, 1)
-    shine.BackgroundTransparency = 0.88
-    shine.BorderSizePixel = 0
-    shine.Size = UDim2.new(1, 0, 0.42, 0)
-    shine.Parent = badge
-    Instance.new("UICorner", shine).CornerRadius = UDim.new(0, 14)
+    local discordText = Instance.new("TextLabel")
+    discordText.BackgroundTransparency = 1
+    discordText.Font = Enum.Font.GothamSemibold
+    discordText.Text = "More anime & updates"
+    discordText.TextColor3 = Color3.fromRGB(210, 198, 255)
+    discordText.TextScaled = true
+    discordText.TextXAlignment = Enum.TextXAlignment.Left
+    discordText.Position = UDim2.fromOffset(20, 64)
+    discordText.Size = UDim2.new(0.55, -20, 0, 18)
+    discordText.Parent = panel
+
+    local copyBtn = Instance.new("TextButton")
+    copyBtn.Name = "DiscordCopyButton"
+    copyBtn.AnchorPoint = Vector2.new(1, 0)
+    copyBtn.Position = UDim2.new(1, -16, 0, 62)
+    copyBtn.Size = UDim2.fromOffset(138, 34)
+    copyBtn.BackgroundColor3 = Color3.fromRGB(105, 64, 255)
+    copyBtn.BackgroundTransparency = 0.04
+    copyBtn.BorderSizePixel = 0
+    copyBtn.AutoButtonColor = false
+    copyBtn.Text = "CLICK ME TO COPY"
+    copyBtn.TextColor3 = WHITE
+    copyBtn.TextScaled = true
+    copyBtn.Font = Enum.Font.GothamBlack
+    copyBtn.Parent = panel
+    Instance.new("UICorner", copyBtn).CornerRadius = UDim.new(0, 12)
+
+    local btnGradient = Instance.new("UIGradient")
+    btnGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(139, 96, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 119, 58)),
+    })
+    btnGradient.Rotation = 10
+    btnGradient.Parent = copyBtn
+
+    local btnStroke = Instance.new("UIStroke")
+    btnStroke.Color = WHITE
+    btnStroke.Thickness = 1.2
+    btnStroke.Transparency = 0.62
+    btnStroke.Parent = copyBtn
+
+    local invite = Instance.new("TextLabel")
+    invite.BackgroundTransparency = 1
+    invite.Font = Enum.Font.Gotham
+    invite.Text = DISCORD_INVITE
+    invite.TextColor3 = Color3.fromRGB(165, 150, 210)
+    invite.TextScaled = true
+    invite.TextXAlignment = Enum.TextXAlignment.Left
+    invite.Position = UDim2.fromOffset(20, 92)
+    invite.Size = UDim2.new(1, -40, 0, 14)
+    invite.Parent = panel
+
+    local function buttonPulse(success)
+        local oldText = copyBtn.Text
+        copyBtn.Text = success and "COPIED!" or "COPY LINK"
+        tween(copyBtn, 0.08, Enum.EasingStyle.Sine, Enum.EasingDirection.Out, {Size = UDim2.fromOffset(146, 36)})
+        tween(btnStroke, 0.08, Enum.EasingStyle.Sine, Enum.EasingDirection.Out, {Transparency = 0.08, Thickness = 2.0})
+        task.delay(0.9, function()
+            if copyBtn and copyBtn.Parent then
+                copyBtn.Text = oldText
+                tween(copyBtn, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out, {Size = UDim2.fromOffset(138, 34)})
+                tween(btnStroke, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out, {Transparency = 0.62, Thickness = 1.2})
+            end
+        end)
+    end
+
+    copyBtn.Activated:Connect(function()
+        buttonPulse(copyDiscordInvite())
+    end)
+    copyBtn.MouseEnter:Connect(function()
+        tween(copyBtn, 0.12, Enum.EasingStyle.Sine, Enum.EasingDirection.Out, {BackgroundTransparency = 0})
+        tween(btnStroke, 0.12, Enum.EasingStyle.Sine, Enum.EasingDirection.Out, {Transparency = 0.22})
+    end)
+    copyBtn.MouseLeave:Connect(function()
+        tween(copyBtn, 0.18, Enum.EasingStyle.Sine, Enum.EasingDirection.Out, {BackgroundTransparency = 0.04})
+        tween(btnStroke, 0.18, Enum.EasingStyle.Sine, Enum.EasingDirection.Out, {Transparency = 0.62})
+    end)
 
     brandConn = RunService.Heartbeat:Connect(function()
-        if not badge.Parent then
+        if not panel.Parent then
             if brandConn then brandConn:Disconnect(); brandConn = nil end
             return
         end
         local pulse = 0.5 + math.sin(os.clock() * 2.4) * 0.5
-        stroke.Transparency = 0.18 + pulse * 0.28
+        stroke.Transparency = 0.10 + pulse * 0.24
         stroke.Color = isBankaiActive and ORANGE or ACCENT
+        glow.BackgroundColor3 = stroke.Color
+        glow.BackgroundTransparency = 0.18 + pulse * 0.38
+        panelGradient.Rotation = 18 + math.sin(os.clock() * 0.45) * 9
     end)
 end
 
@@ -1801,6 +1916,12 @@ local function createToolGui()
     container.Size                 = UDim2.fromOffset(64, #TOOL_DEFS * 62 + 8)
     container.Parent               = gui
     Instance.new("UICorner", container).CornerRadius = UDim.new(0, 14)
+    local containerGradient = Instance.new("UIGradient", container)
+    containerGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(22, 7, 50)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(5, 2, 14)),
+    })
+    containerGradient.Rotation = 90
     local cs = Instance.new("UIStroke", container)
     cs.Color = ACCENT; cs.Thickness = 1.2; cs.Transparency = 0.55
 
@@ -1823,6 +1944,12 @@ local function createToolGui()
         btn.AutoButtonColor       = false
         btn.Parent                = container
         Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 11)
+        local btnGradient = Instance.new("UIGradient", btn)
+        btnGradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, def.bg:Lerp(def.stroke, 0.28)),
+            ColorSequenceKeypoint.new(1, def.bg),
+        })
+        btnGradient.Rotation = 22
 
         local sk = Instance.new("UIStroke", btn)
         sk.Color       = def.stroke
@@ -2066,11 +2193,20 @@ local function createIntroGui(onComplete)
     card.BackgroundColor3 = Color3.fromRGB(13,8,26)
     card.BorderSizePixel = 0
     card.Position = UDim2.fromScale(0.5,0.5)
-    card.Size = UDim2.fromOffset(540,285)
+    card.Size = UDim2.fromOffset(610,345)
     card.Parent = shade
     Instance.new("UICorner", card).CornerRadius = UDim.new(0,20)
     local sk = Instance.new("UIStroke")
     sk.Color = ACCENT; sk.Thickness = 2; sk.Transparency = 0.12; sk.Parent = card
+
+    local cardGradient = Instance.new("UIGradient")
+    cardGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(28, 9, 66)),
+        ColorSequenceKeypoint.new(0.55, Color3.fromRGB(13, 8, 26)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(54, 18, 7)),
+    })
+    cardGradient.Rotation = 18
+    cardGradient.Parent = card
 
     local titleLbl = Instance.new("TextLabel")
     titleLbl.BackgroundTransparency = 1
@@ -2081,6 +2217,17 @@ local function createIntroGui(onComplete)
     titleLbl.TextColor3 = WHITE; titleLbl.TextScaled = true
     titleLbl.TextXAlignment = Enum.TextXAlignment.Left
     titleLbl.Parent = card
+
+    local byLbl = Instance.new("TextLabel")
+    byLbl.BackgroundTransparency = 1
+    byLbl.Font = Enum.Font.GothamBlack
+    byLbl.Position = UDim2.new(1, -210, 0, 31)
+    byLbl.Size = UDim2.fromOffset(180, 24)
+    byLbl.Text = BRAND_BYLINE
+    byLbl.TextColor3 = GOLD
+    byLbl.TextScaled = true
+    byLbl.TextXAlignment = Enum.TextXAlignment.Right
+    byLbl.Parent = card
 
     local subLbl = Instance.new("TextLabel")
     subLbl.BackgroundTransparency = 1
@@ -2108,7 +2255,8 @@ local function createIntroGui(onComplete)
     local infoTexts = {
         "✦ Left panel: 7 Tools (Reiatsu, Kyoka, Flash, Hado 90, Byakurai, Cero, Aura)",
         "✦ Right panel: Z = Shikai  |  B = Bankai",
-        "✦ " .. BRAND_NAME .. " signature UI, captions, watermark, and cutscene tags",
+        "✦ " .. BRAND_BYLINE .. " signature UI, captions, watermark, and cutscene tags",
+        "✦ More anime & updates: top-right Discord button copies invite",
         "✦ Chat messages auto-send  •  Fling system active  •  AAA VFX",
         "✦ Kurohitsugi: Giant Black Coffin + Teleport to Spawn",
     }
@@ -2116,8 +2264,8 @@ local function createIntroGui(onComplete)
         local il = Instance.new("TextLabel")
         il.BackgroundTransparency = 1
         il.Font = Enum.Font.Gotham
-        il.Position = UDim2.fromOffset(30, 162 + (i-1)*30)
-        il.Size = UDim2.new(1,-60,0,26)
+        il.Position = UDim2.fromOffset(30, 162 + (i-1)*27)
+        il.Size = UDim2.new(1,-60,0,24)
         il.Text = txt
         il.TextColor3 = Color3.fromRGB(180,160,220)
         il.TextScaled = true
